@@ -96,8 +96,9 @@ func TestTools_UploadMultipleFiles(t *testing.T) {
 				t.Errorf("%s: expected file to exist: %s", e.name, err.Error())
 			}
 
-			_ = os.Remove(newFilePath)
 		}
+
+		_ = os.RemoveAll("./testdata/uploads")
 
 		if !e.errorExpected && err != nil {
 			t.Errorf("%s: error expected but none received", e.name)
@@ -158,8 +159,9 @@ func TestTools_UploadOneFile(t *testing.T) {
 				t.Errorf("%s: expected file to exist: %s", e.name, err.Error())
 			}
 
-			_ = os.Remove(newFilePath)
 		}
+
+		_ = os.RemoveAll("./testdata/uploads")
 
 		if !e.errorExpected && err != nil {
 			t.Errorf("%s: error expected but none received", e.name)
@@ -167,4 +169,18 @@ func TestTools_UploadOneFile(t *testing.T) {
 
 		wg.Wait()
 	}
+}
+
+func TestTools_CreateDirIfNotExist(t *testing.T) {
+	var testTool Tools
+
+	if err := testTool.CreateDirIfNotExists("./testdir/l1/l2"); err != nil {
+		t.Error(err)
+	}
+
+	if err := testTool.CreateDirIfNotExists("./testdir/l1/l2"); err != nil {
+		t.Error(err)
+	}
+
+	_ = os.RemoveAll("./testdir")
 }

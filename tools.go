@@ -46,7 +46,12 @@ func (t *Tools) UploadMultipleFiles(r *http.Request, uploadDir string,
 		t.MaxFileSize = 1073741824
 	}
 
-	err := r.ParseMultipartForm(t.MaxFileSize)
+	err := t.CreateDirIfNotExists(uploadDir)
+	if err != nil {
+		return nil, err
+	}
+
+	err = r.ParseMultipartForm(t.MaxFileSize)
 	if err != nil {
 		return nil, errors.New("the uploaded file is too large")
 	}
@@ -135,4 +140,14 @@ func (t *Tools) UploadOneFile(r *http.Request, uploadDir string,
 	}
 
 	return files[0], nil
+}
+
+func (t *Tools) CreateDirIfNotExists(path string) error {
+	const mode = 0755
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		if err := os.MkdirAll(path, mode); err != nil {
+			return err
+		}
+	}
+	return nil
 }
