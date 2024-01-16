@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 )
 
@@ -97,7 +98,8 @@ func (t *Tools) UploadMultipleFiles(r *http.Request, uploadDir string,
 				uploadedFile.OriginalFileName = hdr.Filename
 
 				if renameFile {
-					uploadedFile.NewFileName = fmt.Sprintf("%s%s", t.RandomString(12), filepath.Ext(hdr.Filename))
+					uploadedFile.NewFileName = fmt.Sprintf("%s%s",
+						t.RandomString(12), filepath.Ext(hdr.Filename))
 				} else {
 					uploadedFile.NewFileName = hdr.Filename
 				}
@@ -105,7 +107,8 @@ func (t *Tools) UploadMultipleFiles(r *http.Request, uploadDir string,
 				var outfile *os.File
 				defer outfile.Close()
 
-				if outfile, err = os.Create(filepath.Join(uploadDir, uploadedFile.NewFileName)); err != nil {
+				if outfile, err = os.Create(filepath.Join(uploadDir,
+					uploadedFile.NewFileName)); err != nil {
 					return nil, err
 				} else {
 					fileSize, err := io.Copy(outfile, infile)
@@ -150,4 +153,20 @@ func (t *Tools) CreateDirIfNotExists(path string) error {
 		}
 	}
 	return nil
+}
+
+func (t *Tools) Slugify(s string) (string, error) {
+	if s == "" {
+		return "", errors.New("empty string not permitted")
+	}
+
+	re := regexp.MustCompile(`[^a-z\d]+`)
+
+	slug := strings.Trim(re.ReplaceAllString(strings.ToLower(s), "-"), "-")
+
+	if len(slug) == 0 {
+		return "", errors.New("slug is empty after removing disallowed characters")
+	}
+
+	return slug, nil
 }
