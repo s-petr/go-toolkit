@@ -6,8 +6,10 @@ import (
 	"image/jpeg"
 	"io"
 	"mime/multipart"
+	"net/http"
 	"net/http/httptest"
 	"os"
+	"path"
 	"sync"
 	"testing"
 )
@@ -210,5 +212,38 @@ func TestTools_Slugify(t *testing.T) {
 		if slug != e.expected && !e.errorExpected {
 			t.Errorf("%s: wrong slug returned; expected %s, got %s\n", e.name, e.expected, slug)
 		}
+	}
+}
+
+func TestTools_DownloadStaticFile(t *testing.T) {
+	rr := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/", nil)
+
+	var testTool Tools
+	const filename = "image.jpg"
+	const downloadName = "download.jpg"
+	const folder = "./testdata"
+
+	fileStats, err := os.Stat(path.Join(folder, filename))
+	if err != nil {
+		t.Error(err)
+	}
+
+	fileSize := fmt.Sprintf("%d", fileStats.Size())
+
+	testTool.DownloadStaticFile(rr, req, folder, filename, "download.jpg")
+
+	res := rr.Result()
+	defer res.Body.Close()
+
+	lengthHeader := res.Header["Content-Length"][0]
+
+	if lengthHeader != fileSize {
+		t.Error("wrong content length of", lengthHeader)
+	}
+
+	if res.Header["Content-Disposition"][0] !=
+		fmt.Sprintf("attachment; filename=\"%s\"", downloadName) {
+		t.Error("wrong content disposition")
 	}
 }
