@@ -358,3 +358,39 @@ func TestTools_ErrorJSON(t *testing.T) {
 		t.Errorf("wrong status code returned; expected %d, got %d", statusCode, rr.Code)
 	}
 }
+
+type RoundTripFunc func(req *http.Request) *http.Response
+
+func (f RoundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
+	return f(req), nil
+}
+
+func NewTestClient(fn RoundTripFunc) *http.Client {
+	return &http.Client{
+		Transport: fn,
+	}
+}
+
+func TestTools_PushJSONToRemote(t *testing.T) {
+	client := NewTestClient(func(req *http.Request) *http.Response {
+		return &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(bytes.NewBufferString("ok")),
+			Header:     make(http.Header),
+		}
+	})
+
+	var testTool Tools
+
+	payload := struct {
+		Message string `json:"message"`
+	}{
+		Message: "hello world",
+	}
+
+	_, _, err := testTool.PushJSONToRemote("http://example.com/test",
+		payload, client)
+	if err != nil {
+		t.Error("failed to call remote url - ", err)
+	}
+}
